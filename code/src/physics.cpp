@@ -13,6 +13,9 @@
 
 //http://www.opengl-tutorial.org/beginners-tutorials/tutorial-3-matrices/
 //https://stackoverflow.com/questions/8844585/glm-rotate-usage-in-opengl
+//https://stackoverflow.com/questions/11253930/how-can-i-find-out-the-vertex-coordinates-of-a-rotating-cube
+
+
 //Mirar de ferho amb quaternions
 
 //Fer Rand Decimals
@@ -108,6 +111,9 @@ void PhysicsUpdate(float dt) {
 	cubeMatRotX = glm::rotate(cubeMatRotX, rx, glm::vec3{ 1, 0, 0 });
 	cubeMatRotY = glm::rotate(cubeMatRotY, ry, glm::vec3{ 0, 1, 0 });
 	cubeMatRotZ = glm::rotate(cubeMatRotZ, rz, glm::vec3{ 0, 0, 1 });
+
+	//https://stackoverflow.com/questions/11253930/how-can-i-find-out-the-vertex-coordinates-of-a-rotating-cube
+	//v' = R * v     ---\/ actualizar vertex segons rotació
 
 	glm::vec3 verts[] = {
 		(cubePos + glm::vec3(-halfW, -halfW, -halfW)) * (cubeMatRotX * cubeMatRotY * cubeMatRotZ),
