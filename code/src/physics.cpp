@@ -21,7 +21,7 @@
 //Fer Rand Decimals
 //Establir vertex
 //Detectar col.lisions dels vertexs amb parets
-//Establir nou estat desprÈs de col.lisiÛ
+//Establir nou estat despr√©s de col.lisi√≥
 
 bool show_test_window = false;
 bool reset = false;
@@ -106,6 +106,8 @@ void PhysicsUpdate(float dt) {
 	force += gravity*dt;
 	cubePos += force*dt;
 
+	//mirar de fer-ho amb una sola variable, tal com est√° feta la camera dels projectes d inf grafica
+	
 	cubeMatPos = glm::translate(glm::mat4(1.f), cubePos);
 
 	cubeMatRotX = glm::rotate(cubeMatRotX, rx, glm::vec3{ 1, 0, 0 });
@@ -113,7 +115,7 @@ void PhysicsUpdate(float dt) {
 	cubeMatRotZ = glm::rotate(cubeMatRotZ, rz, glm::vec3{ 0, 0, 1 });
 
 	//https://stackoverflow.com/questions/11253930/how-can-i-find-out-the-vertex-coordinates-of-a-rotating-cube
-	//v' = R * v     ---\/ actualizar vertex segons rotaciÛ
+	//v' = R * v     ---\/ actualizar vertex segons rotaci√≥
 
 	glm::vec3 verts[] = {
 		(cubePos + glm::vec3(-halfW, -halfW, -halfW)) * (cubeMatRotX * cubeMatRotY * cubeMatRotZ),
