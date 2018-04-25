@@ -16,6 +16,9 @@
 //https://stackoverflow.com/questions/8844585/glm-rotate-usage-in-opengl
 //https://stackoverflow.com/questions/11253930/how-can-i-find-out-the-vertex-coordinates-of-a-rotating-cube
 
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//https://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
+
 
 //Mirar de ferho amb quaternions
 
@@ -28,26 +31,30 @@ bool show_test_window = false;
 bool reset = false;
 bool pause = false;
 
-const float M = 1.f;
+const float M = 1.f;	//Masa
 
 glm::vec3 gravity{ 0.f, -9.81f, 0.f };
 glm::vec3 initPos{ 0.f, 5.f, 0.f };
 
-float halfW = 0.5f; //tamany de la arista
+float halfW = 0.5f; //tamany de la arista / 2
 
-glm::vec3 force;
-glm::vec3 cubePos;
-glm::vec3 torque;
-glm::vec3 angMom;
-glm::vec3 linMom;
-glm::vec3 vel;
-glm::mat3 inertiaTen, invInTen, inI;
-glm::vec3 rot;
-glm::mat3 rotMat;
-glm::vec3 angVel;
-glm::quat rotQuat;
+glm::vec3 F;		//force
+glm::vec3 cubePos;	//position of cube center in world location
+glm::vec3 p;		//p = R*pi + cubePos  //any position of the cube
+glm::vec3 t;		//torque
+glm::vec3 L;		//angular momentum
+glm::vec3 P;		//linear momentum
+glm::vec3 v;		//linear velocity, velocity of the cubePos
+glm::mat3 Ibody;	//inertia tensor
+glm::mat3 invIbody;
+glm::mat3 invI;
+glm::vec3 rot;		//rotation angles
+glm::mat3 R;		//rotation matrix R
+glm::vec3 w;		//angular velocity
+glm::mat3 W;
+glm::quat q;		//quaternion
 
-glm::mat4 cubeMatPos = glm::translate(glm::mat4(1.f), cubePos);
+glm::mat3 cubeMatPos = glm::translate(glm::mat4(1.f), cubePos);
 glm::mat4 cubeMatRotX = glm::mat4(1.f);
 glm::mat4 cubeMatRotY = glm::mat4(1.f);
 glm::mat4 cubeMatRotZ = glm::mat4(1.f);
@@ -121,10 +128,10 @@ void PhysicsInit() {
 
 	cubePos = initPos;
 
-	inertiaTen[0][0] = inertiaTen[1][1] = inertiaTen[2][2] = 1 / 12 * M*(pow(halfW * 2, 2) + pow(halfW * 2, 2));
-	invInTen = glm::inverse(inertiaTen);
+	Ibody[0][0] = Ibody[1][1] = Ibody[2][2] = 1 / 12 * M*(pow(halfW * 2, 2) + pow(halfW * 2, 2));
+	invIbody = glm::inverse(Ibody);
 
-	force = glm::vec3{
+	F = glm::vec3{
 		-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10))),
 		-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10))),
 		-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10)))
@@ -134,13 +141,16 @@ void PhysicsInit() {
 	rot.y = -0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1)));
 	rot.z = -0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1)));
 
+	cubeMatRotX = glm::rotate(cubeMatRotX, rot.x, glm::vec3{ 1, 0, 0 });
+	cubeMatRotY = glm::rotate(cubeMatRotY, rot.y, glm::vec3{ 0, 1, 0 });
+	cubeMatRotZ = glm::rotate(cubeMatRotZ, rot.z, glm::vec3{ 0, 0, 1 });
 
-													cubeMatRotX = glm::rotate(cubeMatRotX, rot.x, glm::vec3{ 1, 0, 0 });
-													cubeMatRotY = glm::rotate(cubeMatRotY, rot.y, glm::vec3{ 0, 1, 0 });
-													cubeMatRotZ = glm::rotate(cubeMatRotZ, rot.z, glm::vec3{ 0, 0, 1 });
+	//R = cubeMatRotX * cubeMatRotY * cubeMatRotZ;
+	q = glm::toQuat(R);
 
-													glm::quat rotQuat = glm::toQuat(cubeMatRotX * cubeMatRotY * cubeMatRotZ);
-
+	//torque += glm::cross((glm::vec3{0, 0, 0} - cubePos), force);
+	p = cubePos + R * glm::vec3(0, -halfW, 0);
+	t = glm::cross((p - cubePos), F);
 
 	Cube::setupCube();
 	Sphere::setupSphere();
@@ -148,46 +158,35 @@ void PhysicsInit() {
 
 void PhysicsUpdate(float dt) {
 	if (!pause) {
+
+		//p = cubePos + R * glm::vec3(-halfW / 2, -halfW, halfW / 2);
+		//t = glm::cross((p - cubePos), F);
+
+		/*F += gravity * dt;
+		P += F * dt;
+		L += t * dt;
+		v = P / M;
+		cubePos += dt * v;
+		invI = R * invIbody * glm::transpose(R);
+		w = invI * L;
+
+		W[0][0] = 0;	W[0][1] = -w.z;		W[0][2] = w.y;
+		W[1][0] = w.z;	W[1][1] = 0;		W[1][2] = -w.x;
+		W[2][0] = -w.y;	W[2][1] = w.x;		W[2][2] = 0;
+
+		R = R + dt*(W * R); //R = R + dt * glm::cross(W, R);*/
 		
-		/*force += gravity * dt;
-		linMom += force * dt;
-		torque += rotQuat - cubePos * force;
-		angMom += angMom + torque * dt;
-		vel = linMom / M;
-		cubePos = cubePos + dt + vel;
-		inI = rotMat * invInTen * glm::transpose(rotMat);
-		angVel = inI * linMom;
-		rotQuat = 0.5f * angVel * rotQuat;*/
+		F += gravity * dt;
+		P += F * dt;
+		L += t * dt;
+		v = P / M;
+		cubePos += dt * v;
+		invI = glm::toMat3(glm::normalize(q)) * invIbody * glm::transpose(glm::toMat3(glm::normalize(q)));
+		w = invI * L;
 
-		force += gravity * dt;
-		linMom += force * dt;
-		torque += (rot - cubePos) * force;
-		angMom += torque * dt;
-		vel = linMom / M;
-		cubePos += dt * vel;
-		inI = glm::toMat3(rotQuat) * invInTen * glm::transpose(glm::toMat3(rotQuat));
-		angVel = inI * linMom;
-		rotQuat = 0.5f * angVel * rotQuat;
-
-		/*force += gravity * dt;
-		linMom += force * dt;
-		torque += (rot - cubePos) * force;
-		angMom += angMom + torque * dt;
-		vel = linMom / M;
-		cubePos = cubePos + dt + vel;
-		inI = rotMat * invInTen * glm::transpose(rotMat);
-		angVel = inI * linMom;
-		rotMat = rotMat + dt*(glm::cross(glm::toMat3(angVel), rotMat));*/
-
-		//mirar de fer-ho amb una sola variable, tal com está feta la camera dels projectes d inf grafica
+		q += 0.5f*(w*q);		///algo falla aqui, creo!!!!!!
 
 		cubeMatPos = glm::translate(glm::mat4(1.f), cubePos);
-
-		/*cubeMatRotX = glm::rotate(cubeMatRotX, rot.x, glm::vec3{ 1, 0, 0 });
-		cubeMatRotY = glm::rotate(cubeMatRotY, rot.y, glm::vec3{ 0, 1, 0 });
-		cubeMatRotZ = glm::rotate(cubeMatRotZ, rot.z, glm::vec3{ 0, 0, 1 });
-
-		glm::quat k = glm::toQuat(cubeMatRotX * cubeMatRotY * cubeMatRotZ);*/
 
 		//https://stackoverflow.com/questions/11253930/how-can-i-find-out-the-vertex-coordinates-of-a-rotating-cube
 		//v' = R * v     ---\/ actualizar vertex segons rotació
@@ -216,10 +215,10 @@ void PhysicsUpdate(float dt) {
 
 		cubePos = initPos;
 
-		vel = { 0, 0, 0 };
-		linMom = { 0, 0, 0 };
+		v = { 0, 0, 0 };
+		L = { 0, 0, 0 };
 
-		force = glm::vec3{
+		F = glm::vec3{
 			-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10))),
 			-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10))),
 			-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10)))
@@ -256,9 +255,10 @@ void PhysicsUpdate(float dt) {
 	}
 
 	//Cube::updateCube(cubeMatPos * (cubeMatRotX * cubeMatRotY * cubeMatRotZ));	//REVISAR ABANS D'ENTREGAR
-	Cube::updateCube(cubeMatPos * glm::toMat4(rotQuat)); 
-
-	Sphere::updateSphere(verts[0], 0.1);	//vertex
+	//Cube::updateCube(cubeMatPos * glm::toMat4(rotQuat));
+	//Cube::updateCube(cubeMatPos * R);	//REVISAR ABANS D'ENTREGAR
+	Cube::updateCube(cubeMatPos * glm::toMat3(glm::normalize(q)));
+	Sphere::updateSphere(verts[0], 0.1);			//vertex
 
 	Cube::drawCube();
 
