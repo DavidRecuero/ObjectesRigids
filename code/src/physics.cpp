@@ -45,9 +45,9 @@ glm::vec3 t;		//torque
 glm::vec3 L;		//angular momentum
 glm::vec3 P;		//linear momentum
 glm::vec3 v;		//linear velocity, velocity of the cubePos
-glm::mat3 Ibody;	//inertia tensor
-glm::mat3 invIbody;
-glm::mat3 invI;
+glm::mat3 Ibody = glm::mat3(0.f);	//inertia tensor
+glm::mat3 invIbody = glm::mat3(0.f);
+glm::mat3 invI = glm::mat3(0.f);
 glm::vec3 rot;		//rotation angles
 glm::mat3 R;		//rotation matrix R
 glm::mat4 R4 = glm::mat4(0.f);
@@ -136,8 +136,16 @@ void PhysicsInit() {
 
 	cubePos = initPos;
 
-	Ibody[0][0] = Ibody[1][1] = Ibody[2][2] = (1 / 12) * M *(pow(halfW * 2, 2) + pow(halfW * 2, 2));
-	invIbody = glm::inverse(Ibody);
+	Ibody[0][0] = 1.f / 12.f * M *(pow(halfW * 2, 2) + pow(halfW * 2, 2));
+	Ibody[1][1] = 1.f / 12.f * M *(pow(halfW * 2, 2) + pow(halfW * 2, 2));
+	Ibody[2][2] = 1.f / 12.f * M *(pow(halfW * 2, 2) + pow(halfW * 2, 2));
+
+	
+	std::cout << Ibody[0][0] << "   " << Ibody[0][1] << "   " << Ibody[0][2] << std::endl;
+	std::cout << Ibody[1][0] << "   " << Ibody[1][1] << "   " << Ibody[1][2] << std::endl;
+	std::cout << Ibody[2][0] << "   " << Ibody[2][1] << "   " << Ibody[2][2] << std::endl;
+
+	Ibody = glm::inverse(Ibody);
 
 	F = glm::vec3{
 		-1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2))),
@@ -184,9 +192,8 @@ void PhysicsUpdate(float dt) {
 		L += dt * t;
 		v = P / M;
 		cubePos += dt * v;
-		invI = glm::mat3_cast(q) * invIbody * glm::transpose(glm::mat3_cast(q));
-			//w = invI * L;
-			w = glm::vec3{ 1.0, 1.0, 1.0 } * L;
+		invI = glm::mat3_cast(q) * Ibody * glm::transpose(glm::mat3_cast(q));
+			w = invI * L;
 		q += dt * (0.5f * glm::quat(0, w) * q);		
 
 		q = glm::normalize(q);
