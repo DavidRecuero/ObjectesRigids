@@ -127,17 +127,22 @@ void GUI() {
 	}
 }
 
+void euler(float dt)
+{
+
+}
+
 void PhysicsInit() {
 
 	cubePos = initPos;
 
-	Ibody[0][0] = Ibody[1][1] = Ibody[2][2] = 1 / 12 * M*(pow(halfW * 2, 2) + pow(halfW * 2, 2));
+	Ibody[0][0] = Ibody[1][1] = Ibody[2][2] = (1 / 12) * M *(pow(halfW * 2, 2) + pow(halfW * 2, 2));
 	invIbody = glm::inverse(Ibody);
 
 	F = glm::vec3{
-		-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10))),
-		-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10))),
-		-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10)))
+		-1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2))),
+		-1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2))),
+		-1 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (2))),
 	};
 
 	rot.x = 0;// -0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1)));
@@ -150,54 +155,41 @@ void PhysicsInit() {
 
 	R = cubeMatRotX * cubeMatRotY * cubeMatRotZ;
 	//q = glm::toQuat(R);
-	q = glm::rotate(q, rot.x, glm::vec3{ 1, 0, 0 });
-	q = glm::rotate(q, rot.y, glm::vec3{ 0, 1, 0 });
-	q = glm::rotate(q, rot.z, glm::vec3{ 0, 0, 1 });
+	//q = glm::rotate(q, rot.x, glm::vec3{ 1, 1, 1 });
+	//q = glm::rotate(q, rot.y, glm::vec3{ 0, 1, 0 });
+	//q = glm::rotate(q, rot.z, glm::vec3{ 0, 0, 1 });
 
-	glm::normalize(q);
+	//glm::normalize(q);
 
 	p = cubePos + q * glm::vec3(1/2, 1/2, 1/2);
 	//t = glm::cross((p - cubePos), F);
 
-	t = glm::vec3{
+	t += glm::vec3{
 		-0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1))),
 		-0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1))),
 		-0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1)))
 	};
 
+	R4[3][3] = 1;
+
 	Cube::setupCube();
 	Sphere::setupSphere();
-
-	R4[3][3] = 1;
 }
 
 void PhysicsUpdate(float dt) {
 	if (!pause) {
-
-		/*F += gravity * dt;
-		P += F * dt;
-		L += t * dt;
-		v = P / M;
-		cubePos += dt * v;
-		invI = R * invIbody * glm::transpose(R);
-		w = invI * L;
-
-		W[0][0] = 0;	W[0][1] = -w.z;		W[0][2] = w.y;
-		W[1][0] = w.z;	W[1][1] = 0;		W[1][2] = -w.x;
-		W[2][0] = -w.y;	W[2][1] = w.x;		W[2][2] = 0;
-
-		R = R + dt*(W * R); //R = R + dt * glm::cross(W, R);*/
-		
+	
 		F += gravity * dt;
 		P += dt * F;
 		L += dt * t;
 		v = P / M;
 		cubePos += dt * v;
-			invI = glm::toMat3(q) * invIbody * glm::transpose(glm::toMat3(q));
-			w = invI * L;
-		q += 0.5f * glm::quat(0, w) * q;		///algo falla aqui, creo!!!!!!
+		invI = glm::mat3_cast(q) * invIbody * glm::transpose(glm::mat3_cast(q));
+			//w = invI * L;
+			w = glm::vec3{ 1.0, 1.0, 1.0 } * L;
+		q += dt * (0.5f * glm::quat(0, w) * q);		
 
-		glm::normalize(q);
+		q = glm::normalize(q);
 
 		cubeMatPos = glm::translate(glm::mat4(1.f), cubePos);
 
@@ -267,11 +259,7 @@ void PhysicsUpdate(float dt) {
 		reset = false;
 	}
 
-	R4[0][0] = R[0][0];	R4[0][1] = R[0][1];		R4[0][2] = R[0][2];
-	R4[1][0] = R[1][0];	R4[1][1] = R[1][1];		R4[1][2] = R[1][2];
-	R4[2][0] = R[2][0];	R4[2][1] = R[2][1];		R4[2][2] = R[2][2];
-
-	Cube::updateCube(cubeMatPos * glm::toMat4(q)); //revisar abans entregar
+	Cube::updateCube(cubeMatPos * glm::mat4_cast(q)); //revisar abans entregar
 	Sphere::updateSphere(verts[0], 0.1);			//vertex
 
 	Cube::drawCube();
