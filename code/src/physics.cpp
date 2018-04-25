@@ -160,9 +160,8 @@ void PhysicsUpdate(float dt) {
 		tMat = glm::translate(glm::mat4(1.f), x);
 
 		//v' = R * v     ---\/ actualizar vertex segons rotació
-		for (int i = 0; i < 8; i++) {
+		for (int i = 0; i < 8; i++) 
 			verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
-		}
 
 		//////////////////////////////////////////Collision
 
@@ -206,7 +205,9 @@ void resetVariables()
 	L = { 0, 0, 0 };
 	P = { 0, 0, 0 };
 	w = { 0, 0, 0 };
+
 	q = { 0, 0, 0, 0 };
+	tMat = glm::translate(glm::mat4(1.f), x);
 
 	F = glm::vec3{
 		-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10))),
@@ -214,12 +215,8 @@ void resetVariables()
 		-5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (10)))
 	};
 
-	tMat = glm::translate(glm::mat4(1.f), x);
-
 	for (int i = 0; i < 8; i++)
-	{
 		verts[i] = x + initVerts[i];
-	}
 
 	t += glm::vec3{
 		-0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1))),
