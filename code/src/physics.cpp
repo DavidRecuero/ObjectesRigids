@@ -26,7 +26,7 @@
 	//Establir nou estat després de col.lisió
 		//vertex que colisiona										-> OK
 		//time de colision amb una tolerancia						-> OK
-		//contact point at collision point							->
+		//contact point at collision point							-> OK
 		//response velocities at tc to prevent interpenetration		->
 		//simulate from tc to t + dif t
 
@@ -40,6 +40,8 @@ const float M = 1.f;							//Masa
 const glm::vec3 gravity{ 0.f, -9.81f, 0.f };	//gravity value
 const glm::vec3 initPos{ 0.f, 5.f, 0.f };		//initial cube position
 const float halfW = 0.5f;						//half edge size
+
+float e = 0.5; //coefficient of restitution
 
 float tc;			//time collision
 glm::vec3 lastX;
@@ -196,7 +198,7 @@ void PhysicsUpdate(float dt) {
 
 		//////////////////////////////////////////Collision
 
-		for (int i = 0; i < 8; i++)
+		for (int i = 0; i < 8; i++)			//repenserho
 		{
 			if (verts[i].x < -5)
 			{
@@ -209,15 +211,22 @@ void PhysicsUpdate(float dt) {
 			else if (verts[i].y < 0)
 			{
 				tc = dt;
+				float dTc = tc / 2;
 				float edge = 0;
+				glm::vec3 n = { 0, 1, 0 };
 
 				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)
 				{
+
 					if (bigger)
 						tc *= 1.5f;
 					else
 						tc *= 0.5f;
-						
+
+					/*//tc /= 2.f;
+					//dTc = tc / 2.f;
+					dTc /= 2;*/
+
 					vertexBuffer = verts[i];
 
 					glm::vec3 auxX = lastX;
@@ -239,15 +248,15 @@ void PhysicsUpdate(float dt) {
 
 					verts[i] = glm::mat3_cast(auxQ) * initVerts[i] + auxX;
 
-					if (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }))
-						bigger = false;
+					if (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) < glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }))
+						bigger = false;//tc -= dTc;
 					else 
-						bigger = true; 
+						bigger = true;//tc += dTc;
 
-					std::cout << "Loop" << " " << tc << " " << verts[i].y << std::endl;
+					std::cout << "Loop" << " " << tc << " " << verts[i].y << " " << std::endl;
 				}
 
-				std::cout << glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << std::endl;
+				std::cout << " ---------------------- "<< glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << std::endl;
 
 				bigger = false;
 
@@ -266,12 +275,25 @@ void PhysicsUpdate(float dt) {
 				verts[i] = glm::mat3_cast(lastQ) * initVerts[i] + lastX;
 
 				std::cout << verts[i].y << std::endl;
+																		
+				///////////////////////////////////////////////////////////////////////////////////////////calculate velocities 
 
-																												pause = true;
-				
-				break;
+				glm::vec3 pa = v + glm::cross(w, (verts[i] - lastX));
+				glm::vec3 Vr = n * pa;
+				glm::vec3 r = { lastQ.x, lastQ.y, lastQ.z };		//?????????????????
 
-				//calculate velocities 
+				glm::vec3 j = (-(1 + e) * Vr) / (1 / M + n * glm::cross((invI * glm::cross(r, n)), r));		//Vrel -  ????????????????
+
+				glm::vec3 J = j * n;
+				t = glm::cross(r, J);
+
+				F = J;
+
+				P += J; ///?????
+				L += t; //??????
+
+				//pause = true;
+				break;//cambiar
 
 			}
 			else if (verts[i].y > 10)
