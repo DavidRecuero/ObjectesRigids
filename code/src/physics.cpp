@@ -47,6 +47,14 @@ glm::quat lastQ;
 glm::vec3 lastF;		
 glm::vec3 lastL;		
 glm::vec3 lastP;
+glm::vec3 auxX;
+glm::quat auxQ;
+glm::vec3 auxF;
+glm::vec3 auxL;
+glm::vec3 auxP;
+glm::vec3 vertexBuffer;
+bool bigger = false;
+const float tolerance = 0.05;
 
 glm::vec3 F;		//force
 glm::vec3 x;		//position of cube center in world location
@@ -62,8 +70,6 @@ glm::mat3 invI;		// " " " " " " "
 
 glm::quat q;		//quaternion
 glm::mat4 tMat;		//translation matrix
-
-const float tolerance = 0.25;
 
 //initial Verts location
 glm::vec3 initVerts[] = {
@@ -180,10 +186,11 @@ void PhysicsUpdate(float dt) {
 
 		tMat = glm::translate(glm::mat4(1.f), x);
 
-		//v' = R * v     ---\/ actualizar vertex segons rotació
+		//guardem vertx precollision
 		for (int i = 0; i < 8; i++)
 			lastVerts[i] = verts[i];
 
+		//v' = R * v     ---\/ actualizar vertex segons rotació
 		for (int i = 0; i < 8; i++) 
 			verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
 
@@ -193,56 +200,99 @@ void PhysicsUpdate(float dt) {
 		{
 			if (verts[i].x < -5)
 			{
-				tc = dt;
-				float edge = -5;
-
-				if (((edge - tolerance) > verts[i].x && (edge + tolerance) < verts[i].x))	//esta dins
-				{
-					//calcular velocitats
-				}
-				else
-				{
-					while (((edge - tolerance) < verts[i].x && (edge + tolerance) > verts[i].x))	//esta fora
-					{
-						tc = tc / 2;
-
-						lastF += gravity * dt;
-						lastP += dt * lastF;
-						lastL += dt * t;
-						v = lastP / M;
-						lastX += dt * v;
-						invI = glm::mat3_cast(q) * invIbody * glm::transpose(glm::mat3_cast(q));
-						w = invI * L;
-						lastQ += dt * (0.5f * glm::quat(0, w) * q);
-
-						lastQ = glm::normalize(lastQ);
-
-						lastVerts[i] = glm::mat3_cast(lastQ) * initVerts[i] + lastX;
-
-						//////ver que mitad está más cerca y set el time correspondiente * 2
-					}
-				}
-				
+				//pause = true;
 			}
 			else if (verts[i].x > 5) 
 			{
-				pause = true;
+				//pause = true;
 			}
 			else if (verts[i].y < 0)
 			{
+				tc = dt;
+				float edge = 0;
+
+				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)	//mentres es fora
+				{
+					if (bigger)
+					{
+						tc *= 1.5f;
+					}
+					else
+					{
+						tc *= 0.5f;
+					}
+						
+					vertexBuffer = verts[i];
+
+					glm::vec3 auxX = lastX;
+					glm::quat auxQ = lastQ;
+					glm::vec3 auxF = lastF;
+					glm::vec3 auxL = lastL;
+					glm::vec3 auxP = lastP;
+
+					auxF += gravity * tc;
+					auxP += tc * auxF;
+					auxL += tc * t;
+					v = auxP / M;
+					auxX += tc * v;
+					invI = glm::mat3_cast(auxQ) * invIbody * glm::transpose(glm::mat3_cast(auxQ));
+					w = invI * L;
+					auxQ += tc * (0.5f * glm::quat(0, w) * auxQ);
+
+					auxQ = glm::normalize(auxQ);
+
+					verts[i] = glm::mat3_cast(auxQ) * initVerts[i] + x;
+
+					if (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }))
+					{
+						bigger = false;
+					}
+					else 
+					{
+						bigger = true; 
+					}
+				}
+
+				std::cout << glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << std::endl;
+
+				bool bigger = false;
+
+				//calculate X
+				lastF += gravity * tc;
+				lastP += tc * lastF;
+				lastL += tc * t;
+				v = lastP / M;
+				lastX += tc * v;
+				invI = glm::mat3_cast(lastQ) * invIbody * glm::transpose(glm::mat3_cast(lastQ));
+				w = invI * lastL;
+				lastQ += tc * (0.5f * glm::quat(0, w) * lastQ);
+
+				lastQ = glm::normalize(lastQ);
+
+				verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
+
+
+
+
+
+
 				pause = true;
+				
+				
+
+				//calculate velocities 
 			}
 			else if (verts[i].y > 10)
 			{
-				pause = true;
+				//pause = true;
 			}
 			else if (verts[i].z < -5)
 			{
-				pause = true;
+				//pause = true;
 			}
 			else if (verts[i].z > 5)
 			{
-				pause = true;
+				//pause = true;
 			}
 		}
 	}
