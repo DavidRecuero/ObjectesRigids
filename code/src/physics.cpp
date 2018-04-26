@@ -17,12 +17,18 @@
 //https://stackoverflow.com/questions/8844585/glm-rotate-usage-in-opengl
 //https://stackoverflow.com/questions/11253930/how-can-i-find-out-the-vertex-coordinates-of-a-rotating-cube
 //https://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
+//https://www.scss.tcd.ie/Michael.Manzke/CS7057/cs7057-1516-09-CollisionResponse-mm.pdf
 
 //Tareas
 	//Fer Rand Decimals								-> OK
 	//Establir vertex								-> OK
 	//Detectar col.lisions dels vertexs amb parets	-> OK
 	//Establir nou estat després de col.lisió
+		//vertex que colisiona						-> OK
+		//time de colision amb una tolerancia
+		//contact point at collision point
+		//response velocities at tc to prevent interpenetration
+		//simulate from tc to t + dif t
 
 	//arreglar t
 
@@ -34,6 +40,13 @@ const float M = 1.f;							//Masa
 const glm::vec3 gravity{ 0.f, -9.81f, 0.f };	//gravity value
 const glm::vec3 initPos{ 0.f, 5.f, 0.f };		//initial cube position
 const float halfW = 0.5f;						//half edge size
+
+float tc;			//time collision
+glm::vec3 lastX;
+glm::quat lastQ;
+glm::vec3 lastF;		
+glm::vec3 lastL;		
+glm::vec3 lastP;
 
 glm::vec3 F;		//force
 glm::vec3 x;		//position of cube center in world location
@@ -50,6 +63,8 @@ glm::mat3 invI;		// " " " " " " "
 glm::quat q;		//quaternion
 glm::mat4 tMat;		//translation matrix
 
+const float tolerance = 0.25;
+
 //initial Verts location
 glm::vec3 initVerts[] = {
 	glm::vec3(-halfW, -halfW, -halfW),		//   4---------7
@@ -63,6 +78,7 @@ glm::vec3 initVerts[] = {
 };
 
 glm::vec3 verts[8];	//updated verts 
+glm::vec3 lastVerts[8]; //last verts
 
 void resetVariables(); //forward declaration
 
@@ -144,13 +160,18 @@ void PhysicsUpdate(float dt) {
 	if (!pause) {
 	
 		//////////////////////////////////////////Euler - equations of motion
+		lastF = F;
 		F += gravity * dt;
+		lastP = P;
 		P += dt * F;
+		lastL = L;
 		L += dt * t;
 		v = P / M;
+		lastX = x;
 		x += dt * v;
 			invI = glm::mat3_cast(q) * invIbody * glm::transpose(glm::mat3_cast(q));
 			w = invI * L;
+		lastQ = q;
 		q += dt * (0.5f * glm::quat(0, w) * q);		
 
 		q = glm::normalize(q);
@@ -160,6 +181,9 @@ void PhysicsUpdate(float dt) {
 		tMat = glm::translate(glm::mat4(1.f), x);
 
 		//v' = R * v     ---\/ actualizar vertex segons rotació
+		for (int i = 0; i < 8; i++)
+			lastVerts[i] = verts[i];
+
 		for (int i = 0; i < 8; i++) 
 			verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
 
@@ -167,12 +191,59 @@ void PhysicsUpdate(float dt) {
 
 		for (int i = 0; i < 8; i++)
 		{
-			if (verts[i].x < -5)		pause = true;
-			else if (verts[i].x > 5)	pause = true;
-			else if (verts[i].y < 0)	pause = true;
-			else if (verts[i].y > 10)	pause = true;
-			else if (verts[i].z < -5)	pause = true;
-			else if (verts[i].z > 5)	pause = true;
+			if (verts[i].x < -5)
+			{
+				tc = dt;
+				float edge = -5;
+
+				if (((edge - tolerance) > verts[i].x && (edge + tolerance) < verts[i].x))	//esta dins
+				{
+					//calcular velocitats
+				}
+				else
+				{
+					while (((edge - tolerance) < verts[i].x && (edge + tolerance) > verts[i].x))	//esta fora
+					{
+						tc = tc / 2;
+
+						lastF += gravity * dt;
+						lastP += dt * lastF;
+						lastL += dt * t;
+						v = lastP / M;
+						lastX += dt * v;
+						invI = glm::mat3_cast(q) * invIbody * glm::transpose(glm::mat3_cast(q));
+						w = invI * L;
+						lastQ += dt * (0.5f * glm::quat(0, w) * q);
+
+						lastQ = glm::normalize(lastQ);
+
+						lastVerts[i] = glm::mat3_cast(lastQ) * initVerts[i] + lastX;
+
+						//////ver que mitad está más cerca y set el time correspondiente * 2
+					}
+				}
+				
+			}
+			else if (verts[i].x > 5) 
+			{
+				pause = true;
+			}
+			else if (verts[i].y < 0)
+			{
+				pause = true;
+			}
+			else if (verts[i].y > 10)
+			{
+				pause = true;
+			}
+			else if (verts[i].z < -5)
+			{
+				pause = true;
+			}
+			else if (verts[i].z > 5)
+			{
+				pause = true;
+			}
 		}
 	}
 
