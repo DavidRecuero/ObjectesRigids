@@ -27,7 +27,7 @@
 		//vertex que colisiona										-> OK
 		//time de colision amb una tolerancia						-> OK
 		//contact point at collision point							-> OK
-		//response velocities at tc to prevent interpenetration		->
+		//response velocities at tc to prevent interpenetration		-> 
 		//simulate from tc to t + dif t
 
 	//arreglar t
@@ -54,6 +54,11 @@ glm::quat auxQ;
 glm::vec3 auxF;
 glm::vec3 auxL;
 glm::vec3 auxP;
+glm::vec3 aux2X;
+glm::quat aux2Q;
+glm::vec3 aux2F;
+glm::vec3 aux2L;
+glm::vec3 aux2P;
 glm::vec3 vertexBuffer;
 bool bigger = false;
 const float tolerance = 0.05;
@@ -196,6 +201,8 @@ void PhysicsUpdate(float dt) {
 		for (int i = 0; i < 8; i++) 
 			verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
 
+		std::cout << verts[5].y << std::endl;
+
 		//////////////////////////////////////////Collision
 
 		for (int i = 0; i < 8; i++)			//repenserho
@@ -210,6 +217,9 @@ void PhysicsUpdate(float dt) {
 			}
 			else if (verts[i].y < 0)
 			{
+				std::cout << " ---------------------- " << std::endl;
+				std::cout << "V- = | " << v.x << " | " << v.y << " | " << v.z << " | " << std::endl;
+
 				tc = dt;
 				float dTc = tc / 2;
 				float edge = 0;
@@ -253,12 +263,18 @@ void PhysicsUpdate(float dt) {
 					else 
 						bigger = true;//tc += dTc;
 
-					std::cout << "Loop" << " " << tc << " " << verts[i].y << " " << std::endl;
+					//std::cout << "Loop" << " " << tc << " " << verts[i].y << " " << std::endl;
 				}
 
-				std::cout << " ---------------------- "<< glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << std::endl;
+				std::cout << glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << std::endl;
 
 				bigger = false;
+				glm::vec3 aux2X = lastX;
+				glm::quat aux2Q = lastQ;
+				glm::vec3 aux2F = lastF;
+				glm::vec3 aux2L = lastL;
+				glm::vec3 aux2P = lastP;
+
 
 				//calculate X
 				lastF += gravity * tc;
@@ -274,26 +290,61 @@ void PhysicsUpdate(float dt) {
 
 				verts[i] = glm::mat3_cast(lastQ) * initVerts[i] + lastX;
 
-				std::cout << verts[i].y << std::endl;
+				glm::vec3 Pb = { verts[i].x, 0, verts[i].y };		////revisar al fer funció
+
+				//std::cout << verts[i].y << std::endl;
 																		
 				///////////////////////////////////////////////////////////////////////////////////////////calculate velocities 
 
-				glm::vec3 pa = v + glm::cross(w, (verts[i] - lastX));
-				glm::vec3 Vr = n * pa;
-				glm::vec3 r = { lastQ.x, lastQ.y, lastQ.z };		//?????????????????
+				glm::vec3 dotPa = v + glm::cross(w, (verts[i] - lastX));
+				glm::vec3 pa = verts[i];
+				glm::vec3 Vr = n * dotPa;
+				glm::vec3 r = { verts[i].x - lastX.x, verts[i].x - lastX.x, verts[i].x - lastX.x, };		//distance between center and vertex
 
-				glm::vec3 j = (-(1 + e) * Vr) / (1 / M + n * glm::cross((invI * glm::cross(r, n)), r));		//Vrel -  ????????????????
+				glm::vec3 j = (-(1 + e) * Vr) / (1 / M + n * glm::cross((invI * glm::cross(r, n)), r));
 
 				glm::vec3 J = j * n;
 				t = glm::cross(r, J);
 
-				F = J;
+				//F = J;
 
-				P += J; ///?????
-				L += t; //??????
+				P = J; ///?????
+				L = t; //??????
 
+				
+				//////////////////////////////////////////////////////////////////////////////
+				//////////////////////////////////////////////////////////////////////////////
+				v = P / M;
+				x = aux2X;
+				x += (dt - tc) * v;
+				invI = glm::mat3_cast(aux2Q) * invIbody * glm::transpose(glm::mat3_cast(aux2Q));
+				w = invI * L;
+				q = aux2Q;
+				q += (dt - tc) * (0.5f * glm::quat(0, w) * q);
+
+				q = glm::normalize(q);
+
+				//////////////////////////////////////////Transformations
+
+				tMat = glm::translate(glm::mat4(1.f), x);
+
+				//guardem vertx precollision
+				for (int i = 0; i < 8; i++)
+					lastVerts[i] = verts[i];
+
+				//v' = R * v     ---\/ actualizar vertex segons rotació
+				for (int i = 0; i < 8; i++)
+					verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
+
+				std::cout << "V+ = | " << v.x << " | " << v.y << " | " << v.z << " | " << std::endl;
+
+				/////////////////////////////////////////////////////////////////////////////
+				/////////////////////////////////////////////////////////////////////////////
+			
 				//pause = true;
 				break;//cambiar
+
+
 
 			}
 			else if (verts[i].y > 10)
@@ -323,7 +374,7 @@ void PhysicsUpdate(float dt) {
 	Cube::updateCube(tMat * glm::mat4_cast(q));
 	Cube::drawCube();
 
-	Sphere::updateSphere(verts[0], 0.1);		//vertex
+	Sphere::updateSphere(verts[5], 0.1);		//vertex
 	Sphere::drawSphere();
 }
 
