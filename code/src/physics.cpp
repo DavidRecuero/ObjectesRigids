@@ -214,13 +214,9 @@ void PhysicsUpdate(float dt) {
 				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)	//mentres es fora
 				{
 					if (bigger)
-					{
 						tc *= 1.5f;
-					}
 					else
-					{
 						tc *= 0.5f;
-					}
 						
 					vertexBuffer = verts[i];
 
@@ -241,21 +237,20 @@ void PhysicsUpdate(float dt) {
 
 					auxQ = glm::normalize(auxQ);
 
-					verts[i] = glm::mat3_cast(auxQ) * initVerts[i] + x;
+					verts[i] = glm::mat3_cast(auxQ) * initVerts[i] + auxX;
 
+					//malament, si es negatiu decreix fins l'infinit
 					if (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }))
-					{
 						bigger = false;
-					}
 					else 
-					{
 						bigger = true; 
-					}
+
+					std::cout << "Loop" << " " << tc << " " << verts[i].y << std::endl;
 				}
 
 				std::cout << glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << std::endl;
 
-				bool bigger = false;
+				bigger = false;
 
 				//calculate X
 				lastF += gravity * tc;
@@ -271,14 +266,14 @@ void PhysicsUpdate(float dt) {
 
 				verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
 
-
+				std::cout << verts[i].y << std::endl;
 
 
 
 
 				pause = true;
 				
-				
+				break;
 
 				//calculate velocities 
 			}
