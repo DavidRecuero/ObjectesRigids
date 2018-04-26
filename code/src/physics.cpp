@@ -20,14 +20,14 @@
 //https://www.scss.tcd.ie/Michael.Manzke/CS7057/cs7057-1516-09-CollisionResponse-mm.pdf
 
 //Tareas
-	//Fer Rand Decimals								-> OK
-	//Establir vertex								-> OK
-	//Detectar col.lisions dels vertexs amb parets	-> OK
+	//Fer Rand Decimals												-> OK
+	//Establir vertex												-> OK
+	//Detectar col.lisions dels vertexs amb parets					-> OK
 	//Establir nou estat després de col.lisió
-		//vertex que colisiona						-> OK
-		//time de colision amb una tolerancia
-		//contact point at collision point
-		//response velocities at tc to prevent interpenetration
+		//vertex que colisiona										-> OK
+		//time de colision amb una tolerancia						-> OK
+		//contact point at collision point							->
+		//response velocities at tc to prevent interpenetration		->
 		//simulate from tc to t + dif t
 
 	//arreglar t
@@ -211,7 +211,7 @@ void PhysicsUpdate(float dt) {
 				tc = dt;
 				float edge = 0;
 
-				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)	//mentres es fora
+				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)
 				{
 					if (bigger)
 						tc *= 1.5f;
@@ -239,7 +239,6 @@ void PhysicsUpdate(float dt) {
 
 					verts[i] = glm::mat3_cast(auxQ) * initVerts[i] + auxX;
 
-					//malament, si es negatiu decreix fins l'infinit
 					if (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }))
 						bigger = false;
 					else 
@@ -264,18 +263,16 @@ void PhysicsUpdate(float dt) {
 
 				lastQ = glm::normalize(lastQ);
 
-				verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
+				verts[i] = glm::mat3_cast(lastQ) * initVerts[i] + lastX;
 
 				std::cout << verts[i].y << std::endl;
 
-
-
-
-				pause = true;
+																												pause = true;
 				
 				break;
 
 				//calculate velocities 
+
 			}
 			else if (verts[i].y > 10)
 			{
