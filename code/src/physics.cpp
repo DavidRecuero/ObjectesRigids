@@ -20,19 +20,19 @@
 //https://www.scss.tcd.ie/Michael.Manzke/CS7057/cs7057-1516-09-CollisionResponse-mm.pdf
 
 //Tareas
-	//Fer Rand Decimals												-> OK
-	//Establir vertex												-> OK
-	//Detectar col.lisions dels vertexs amb parets					-> OK
-	//Establir nou estat després de col.lisió
-		//vertex que colisiona										-> OK
-		//time de colision amb una tolerancia						-> OK
-		//contact point at collision point							-> OK
-		//response velocities at tc to prevent interpenetration		-> OK
-		//simulate from tc to t + dif t								-> OK
+//Fer Rand Decimals												-> OK
+//Establir vertex												-> OK
+//Detectar col.lisions dels vertexs amb parets					-> OK
+//Establir nou estat després de col.lisió
+//vertex que colisiona										-> OK
+//time de colision amb una tolerancia						-> OK
+//contact point at collision point							-> OK
+//response velocities at tc to prevent interpenetration		-> OK
+//simulate from tc to dt									-> OK
 
-	//arreglar t													->
-	//corregir exceso fuerza										->
-	//set all planes collsions										->
+//arreglar t													->
+//corregir exceso fuerza										->
+//set all planes collsions										->
 
 bool show_test_window = false;
 bool reset = false;
@@ -45,11 +45,12 @@ const float halfW = 0.5f;						//half edge size
 
 float e = 0.5f; //coefficient of restitution
 
+				//collision things
 float tc;			//time collision
 glm::vec3 lastX;
 glm::quat lastQ;
-glm::vec3 lastF;		
-glm::vec3 lastL;		
+glm::vec3 lastF;
+glm::vec3 lastL;
 glm::vec3 lastP;
 glm::vec3 auxX;
 glm::quat auxQ;
@@ -64,6 +65,8 @@ glm::vec3 aux2P;
 glm::vec3 vertexBuffer;
 bool bigger = false;
 const float tolerance = 0.05;
+glm::vec3 n;
+float edge;
 
 glm::vec3 F;		//force
 glm::vec3 x;		//position of cube center in world location
@@ -80,7 +83,7 @@ glm::mat3 invI;		// " " " " " " "
 glm::quat q;		//quaternion
 glm::mat4 tMat;		//translation matrix
 
-//initial Verts location
+					//initial Verts location
 glm::vec3 initVerts[] = {
 	glm::vec3(-halfW, -halfW, -halfW),		//   4---------7
 	glm::vec3(-halfW, -halfW,  halfW),		//  /|        /|
@@ -96,6 +99,8 @@ glm::vec3 verts[8];	//updated verts
 glm::vec3 lastVerts[8]; //last verts
 
 void resetVariables(); //forward declaration
+void collision(int i, float dt);
+void tcLoop(int i);
 
 namespace Cube {
 	void setupCube();
@@ -157,7 +162,7 @@ void PhysicsInit() {
 	};
 
 	/////////////////////////////////////////Torque
-	p = x + q * glm::vec3(0, 1/2, 0);
+	p = x + q * glm::vec3(0, 1 / 2, 0);
 	//t = glm::cross((p - x), F);	//!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	t += glm::vec3{
@@ -173,7 +178,7 @@ void PhysicsInit() {
 
 void PhysicsUpdate(float dt) {
 	if (!pause) {
-	
+
 		//////////////////////////////////////////Euler - equations of motion
 		lastF = F;
 		F += gravity * dt;
@@ -184,10 +189,10 @@ void PhysicsUpdate(float dt) {
 		v = P / M;
 		lastX = x;
 		x += dt * v;
-			invI = glm::mat3_cast(q) * invIbody * glm::transpose(glm::mat3_cast(q));
-			w = invI * L;
+		invI = glm::mat3_cast(q) * invIbody * glm::transpose(glm::mat3_cast(q));
+		w = invI * L;
 		lastQ = q;
-		q += dt * (0.5f * glm::quat(0, w) * q);		
+		q += dt * (0.5f * glm::quat(0, w) * q);
 
 		q = glm::normalize(q);
 
@@ -200,157 +205,57 @@ void PhysicsUpdate(float dt) {
 			lastVerts[i] = verts[i];
 
 		//v' = R * v     ---\/ actualizar vertex segons rotació
-		for (int i = 0; i < 8; i++) 
+		for (int i = 0; i < 8; i++)
 			verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
 
 		//////////////////////////////////////////Collision
 
 		for (int i = 0; i < 8; i++)			//repenserho
 		{
-			if (verts[i].x < -5)
-			{
-				//pause = true;
-			}
-			else if (verts[i].x > 5) 
-			{
-				//pause = true;
-			}
-			else if (verts[i].y < 0)
+			if (verts[i].y < 0)
 			{
 				std::cout << " ---------------------- " << verts[i].y << std::endl;
-				//std::cout << "V- = | " << v.x << " | " << v.y << " | " << v.z << " | " << std::endl;
 
 				tc = dt;
-				float dTc = tc / 2;
-				float edge = 0;
-				glm::vec3 n = { 0, 1, 0 };
+				edge = 0;
+				n = { 0, 1, 0 };
 
 				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)
 				{
-
-					if (bigger)
-						tc *= 1.5f;
-					else
-						tc *= 0.5f;
-
-					/*//tc /= 2.f;
-					//dTc = tc / 2.f;
-					dTc /= 2;*/
-
-					vertexBuffer = verts[i];
-
-					glm::vec3 auxX = lastX;
-					glm::quat auxQ = lastQ;
-					glm::vec3 auxF = lastF;
-					glm::vec3 auxL = lastL;
-					glm::vec3 auxP = lastP;
-
-					auxF += gravity * tc;
-					auxP += tc * auxF;
-					auxL += tc * t;
-					v = auxP / M;
-					auxX += tc * v;
-					invI = glm::mat3_cast(auxQ) * invIbody * glm::transpose(glm::mat3_cast(auxQ));
-					w = invI * L;
-					auxQ += tc * (0.5f * glm::quat(0, w) * auxQ);
-
-					auxQ = glm::normalize(auxQ);
-
-					verts[i] = glm::mat3_cast(auxQ) * initVerts[i] + auxX;
-
-					//if (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) < glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }))
+					tcLoop(i);
 					if (edge > verts[i].y)
-						bigger = false;//tc -= dTc;
+						bigger = false;		//decrece tc
 					else
-						bigger = true;//tc += dTc;
-						
-					//std::cout << "tc -> " << tc << "| Y -> " << verts[i].y << " current " << glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << " | last " << glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }) << std::endl;
-					std::cout << "tc -> " << tc << "| Y -> " << verts[i].y << " | current " << verts[i].y << " | last " << vertexBuffer.y << std::endl;
+						bigger = true;		//crece tc
 				}
 
-				//std::cout << glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << std::endl;
-
 				bigger = false;
-				glm::vec3 aux2X = lastX;
-				glm::quat aux2Q = lastQ;
-				glm::vec3 aux2F = lastF;
-				glm::vec3 aux2L = lastL;
-				glm::vec3 aux2P = lastP;
 
-
-				//calculate X
-				lastF += gravity * tc;
-				lastP += tc * lastF;
-				lastL += tc * t;
-				v = lastP / M;
-				lastX += tc * v;
-				invI = glm::mat3_cast(lastQ) * invIbody * glm::transpose(glm::mat3_cast(lastQ));
-				w = invI * lastL;
-				lastQ += tc * (0.5f * glm::quat(0, w) * lastQ);
-
-				lastQ = glm::normalize(lastQ);
-
-				verts[i] = glm::mat3_cast(lastQ) * initVerts[i] + lastX;
-
-				glm::vec3 Pb = { verts[i].x, 0, verts[i].y };		////revisar al fer funció
-
-				//std::cout << verts[i].y << std::endl;
-																		
-				///////////////////////////////////////////////////////////////////////////////////////////calculate velocities 
-
-				glm::vec3 dotPa = v + glm::cross(w, (verts[i] - lastX));
-				glm::vec3 pa = verts[i];
-				glm::vec3 Vr = n * dotPa;
-				glm::vec3 r = { verts[i].x - lastX.x, verts[i].x - lastX.x, verts[i].x - lastX.x, };		//distance between center and vertex
-
-				glm::vec3 j = (-(1 + e) * Vr) / (1 / M + n * glm::cross((invI * glm::cross(r, n)), r));
-
-				glm::vec3 J = j * n;
-				t = glm::cross(r, J);
-
-				//F = J;
-
-				P = J; ///?????
-				L = t; //??????
-
-				
-				//////////////////////////////////////////////////////////////////////////////
-				//////////////////////////////////////////////////////////////////////////////
-				v = P / M;
-				x = aux2X;
-				x += (dt - tc) * v;
-				invI = glm::mat3_cast(aux2Q) * invIbody * glm::transpose(glm::mat3_cast(aux2Q));
-				w = invI * L;
-				q = aux2Q;
-				q += (dt - tc) * (0.5f * glm::quat(0, w) * q);
-
-				q = glm::normalize(q);
-
-				//////////////////////////////////////////Transformations
-
-				tMat = glm::translate(glm::mat4(1.f), x);
-
-				//guardem vertx precollision
-				for (int i = 0; i < 8; i++)
-					lastVerts[i] = verts[i];
-
-				//v' = R * v     ---\/ actualizar vertex segons rotació
-				for (int i = 0; i < 8; i++)
-					verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
-
-				std::cout << "V+ = | " << v.x << " | " << v.y << " | " << v.z << " | " << std::endl;
-				std::cout << verts[i].y << std::endl;
-
-				/////////////////////////////////////////////////////////////////////////////
-				/////////////////////////////////////////////////////////////////////////////
-			
-				//pause = true;
-				//break;//cambiar
-
-
-
+				collision(i, dt);
 			}
 			else if (verts[i].y > 10)
+			{
+				tc = dt;
+				edge = 10;
+				n = { 0, -1, 0 };
+
+				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)
+				{
+					tcLoop(i);
+					if (edge < verts[i].y)
+						bigger = false;		//decrece tc
+					else
+						bigger = true;		//crece tc
+				}
+
+				bigger = false;
+
+				collision(i, dt);
+			}
+			else if (verts[i].x < -5)
+			{
+			}
+			else if (verts[i].x > 5)
 			{
 				//pause = true;
 			}
@@ -386,7 +291,7 @@ void PhysicsCleanup() {
 	Sphere::cleanupSphere();
 }
 
-void resetVariables() 
+void resetVariables()
 {
 	x = initPos;
 
@@ -413,4 +318,101 @@ void resetVariables()
 		-0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1)))
 	};
 
+}
+
+void tcLoop(int i)
+{
+	if (bigger)
+		tc *= 1.5f;
+	else
+		tc *= 0.5f;
+
+	vertexBuffer = verts[i];
+
+	glm::vec3 auxX = lastX;
+	glm::quat auxQ = lastQ;
+	glm::vec3 auxF = lastF;
+	glm::vec3 auxL = lastL;
+	glm::vec3 auxP = lastP;
+
+	auxF += gravity * tc;
+	auxP += tc * auxF;
+	auxL += tc * t;
+	v = auxP / M;
+	auxX += tc * v;
+	invI = glm::mat3_cast(auxQ) * invIbody * glm::transpose(glm::mat3_cast(auxQ));
+	w = invI * L;
+	auxQ += tc * (0.5f * glm::quat(0, w) * auxQ);
+
+	auxQ = glm::normalize(auxQ);
+
+	verts[i] = glm::mat3_cast(auxQ) * initVerts[i] + auxX;
+
+	std::cout << "tc -> " << tc << "| Y -> " << verts[i].y << " | current " << verts[i].y << " | last " << vertexBuffer.y << std::endl;
+}
+
+void collision(int i, float dt)
+{
+	glm::vec3 aux2X = lastX;
+	glm::quat aux2Q = lastQ;
+	glm::vec3 aux2F = lastF;
+	glm::vec3 aux2L = lastL;
+	glm::vec3 aux2P = lastP;
+
+	//calculate X
+	lastF += gravity * tc;
+	lastP += tc * lastF;
+	lastL += tc * t;
+	v = lastP / M;
+	lastX += tc * v;
+	invI = glm::mat3_cast(lastQ) * invIbody * glm::transpose(glm::mat3_cast(lastQ));
+	w = invI * lastL;
+	lastQ += tc * (0.5f * glm::quat(0, w) * lastQ);
+
+	lastQ = glm::normalize(lastQ);
+
+	verts[i] = glm::mat3_cast(lastQ) * initVerts[i] + lastX;
+
+	///////////////////////////////////////////////////////////////////////////////////////////calculate impulse
+
+	glm::vec3 dotPa = v + glm::cross(w, (verts[i] - lastX));
+	glm::vec3 pa = verts[i];
+	glm::vec3 Vr = n * dotPa;
+	glm::vec3 r = { verts[i].x - lastX.x, verts[i].y - lastX.y, verts[i].z - lastX.z };		//distance between center and vertex
+
+	glm::vec3 j = (-(1 + e) * Vr) / (1 / M + n * glm::cross((invI * glm::cross(r, n)), r));
+
+	glm::vec3 J = j * n;
+	t = glm::cross(r, J);
+
+	P = J; ///?????
+	L = t; //??????
+
+
+		   ///////////////////////////////////////////////////////////////////////////////////////////simulate from tc to dt
+
+	v = P / M;
+	x = aux2X;
+	x += (dt - tc) * v;
+	invI = glm::mat3_cast(aux2Q) * invIbody * glm::transpose(glm::mat3_cast(aux2Q));
+	w = invI * L;
+	q = aux2Q;
+	q += (dt - tc) * (0.5f * glm::quat(0, w) * q);
+
+	q = glm::normalize(q);
+
+	//Transformations
+
+	tMat = glm::translate(glm::mat4(1.f), x);
+
+	for (int i = 0; i < 8; i++)
+		lastVerts[i] = verts[i];
+
+	for (int i = 0; i < 8; i++)
+		verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
+
+	std::cout << "V+ = | " << v.x << " | " << v.y << " | " << v.z << " | " << std::endl;
+	std::cout << verts[i].y << std::endl;
+
+	//break;
 }
