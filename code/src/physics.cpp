@@ -23,16 +23,18 @@
 //Fer Rand Decimals												-> OK
 //Establir vertex												-> OK
 //Detectar col.lisions dels vertexs amb parets					-> OK
-//Establir nou estat després de col.lisió
-//vertex que colisiona										-> OK
-//time de colision amb una tolerancia						-> OK
-//contact point at collision point							-> OK
-//response velocities at tc to prevent interpenetration		-> OK
-//simulate from tc to dt									-> OK
+	//Establir nou estat després de col.lisió
+	//vertex que colisiona										-> OK
+	//time de colision amb una tolerancia						-> OK
+	//contact point at collision point							-> OK
+	//response velocities at tc to prevent interpenetration		-> OK
+	//simulate from tc to dt									-> OK
 
-//arreglar t													->
-//corregir exceso fuerza										->
-//set all planes collsions										->
+//arreglar t												->
+//arreglar loop (búsqueda binaria)							->
+//corregir exceso fuerza	(aplicar fricció - debuggar be)	->
+//set all planes collsions									-> OK
+//netejar codi												->
 
 bool show_test_window = false;
 bool reset = false;
