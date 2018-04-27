@@ -70,7 +70,6 @@ const float tolerance = 0.05;
 glm::vec3 n;
 float edge;
 float dTc;
-float limit;
 
 glm::vec3 F;		//force
 glm::vec3 x;		//position of cube center in world location
@@ -224,18 +223,10 @@ void PhysicsUpdate(float dt) {
 				dTc = tc/2;
 				edge = 0;
 				n = { 0, 1, 0 };
-				limit = verts[i].y;
-
-				std::cout << " Limit " << limit << " | LastVert " << lastVerts[i].y << std::endl;
 
 				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)
 				{
 					tcLoop(i);
-
-					/*if (edge > verts[i].y)
-						bigger = false;		//decrece tc
-					else
-						bigger = true;		//crece tc*/
 
 					if (edge > verts[i].y)
 						tc -= dTc;
@@ -245,15 +236,14 @@ void PhysicsUpdate(float dt) {
 					dTc /= 2.f;
 				}
 
-				bigger = false;
-
 				collision(i, dt);
-
-				break;
 			}
-			/*else if (verts[i].y > 10)
+			else if (verts[i].y > 10)
 			{
-				tc = dt;
+				std::cout << " ---------------------- " << verts[i].y << std::endl;
+
+				tc = dt / 2;
+				dTc = tc / 2;
 				edge = 10;
 				n = { 0, -1, 0 };
 
@@ -262,20 +252,22 @@ void PhysicsUpdate(float dt) {
 					tcLoop(i);
 
 					if (edge < verts[i].y)
-						bigger = false;		//decrece tc				//poner parametro crece para meter esto en un if dentro de la función
+						tc -= dTc;
 					else
-						bigger = true;		//crece tc
-				}
+						tc += dTc;
 
-				bigger = false;
+					dTc /= 2.f;
+				}
 
 				collision(i, dt);
 
-				break;
 			}
 			else if (verts[i].x < -5)
 			{
-				tc = dt;
+				std::cout << " ---------------------- " << verts[i].y << std::endl;
+
+				tc = dt / 2;
+				dTc = tc / 2;
 				edge = -5;
 				n = { 1, 0, 0 };
 
@@ -284,20 +276,20 @@ void PhysicsUpdate(float dt) {
 					tcLoop(i);
 
 					if (edge > verts[i].x)
-						bigger = false;		//decrece tc
+						tc -= dTc;
 					else
-						bigger = true;		//crece tc
-				}
+						tc += dTc;
 
-				bigger = false;
+					dTc /= 2.f;
+				}
 
 				collision(i, dt);
 
-				break;
 			}
 			else if (verts[i].x > 5)
 			{
-				tc = dt;
+				tc = dt / 2;
+				dTc = tc / 2;
 				edge = 5;
 				n = { -1, 0, 0 };
 
@@ -306,20 +298,20 @@ void PhysicsUpdate(float dt) {
 					tcLoop(i);
 
 					if (edge < verts[i].x)
-						bigger = false;		//decrece tc
+						tc -= dTc;
 					else
-						bigger = true;		//crece tc
-				}
+						tc += dTc;
 
-				bigger = false;
+					dTc /= 2.f;
+				}
 
 				collision(i, dt);
 
-				break;
 			}
 			else if (verts[i].z < -5)
 			{
-				tc = dt;
+				tc = dt / 2;
+				dTc = tc / 2;
 				edge = -5;
 				n = { 0, 0, 1 };
 
@@ -328,20 +320,21 @@ void PhysicsUpdate(float dt) {
 					tcLoop(i);
 
 					if (edge > verts[i].z)
-						bigger = false;		//decrece tc
+						tc -= dTc;
 					else
-						bigger = true;		//crece tc
-				}
+						tc += dTc;
 
-				bigger = false;
+					dTc /= 2.f;
+				}
 
 				collision(i, dt);
 
-				break;
 			}
 			else if (verts[i].z > 5)
 			{
-				tc = dt;
+
+				tc = dt / 2;
+				dTc = tc / 2;
 				edge = 5;
 				n = { 0, 0, -1 };
 
@@ -350,17 +343,16 @@ void PhysicsUpdate(float dt) {
 					tcLoop(i);
 
 					if (edge < verts[i].z)
-						bigger = false;		//decrece tc
+						tc -= dTc;
 					else
-						bigger = true;		//crece tc
-				}
+						tc += dTc;
 
-				bigger = false;
+					dTc /= 2.f;
+				}
 
 				collision(i, dt);
 
-				break;
-			}*/
+			}
 		}
 	}
 
@@ -479,8 +471,8 @@ void collision(int i, float dt)
 	glm::vec3 J = j * n;
 	t = glm::cross(r, J);
 
-	P += J - F; ///?????
-	L += t; //??????
+	P = J; ///?????
+	L = t; //??????
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////simulate from tc to dt
