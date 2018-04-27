@@ -44,7 +44,7 @@ const glm::vec3 initPos{ 0.f, 5.f, 0.f };		//initial cube position
 const float halfW = 0.5f;						//half edge size
 
 float e = 0.5f; //coefficient of restitution
-
+//float e = 0.f; //coefficient of restitution
 				//collision things
 float tc;			//time collision
 glm::vec3 lastX;
@@ -85,14 +85,14 @@ glm::mat4 tMat;		//translation matrix
 
 					//initial Verts location
 glm::vec3 initVerts[] = {
-	glm::vec3(-halfW, -halfW, -halfW),		//   4---------7
-	glm::vec3(-halfW, -halfW,  halfW),		//  /|        /|
-	glm::vec3(halfW, -halfW,  halfW),		// / |       / |
-	glm::vec3(halfW, -halfW, -halfW),		//5---------6  |
-	glm::vec3(-halfW,  halfW, -halfW),		//|  0------|--3
-	glm::vec3(-halfW,  halfW,  halfW),		//| /       | /
-	glm::vec3(halfW,  halfW,  halfW),		//|/        |/
-	glm::vec3(halfW,  halfW, -halfW)		//1---------2
+	glm::vec3(-halfW, -halfW, -halfW),		//	   4---------7
+	glm::vec3(-halfW, -halfW,  halfW),		//	  /|        /|
+	glm::vec3(halfW, -halfW,  halfW),		//	 / |       / |
+	glm::vec3(halfW, -halfW, -halfW),		//	5---------6  |
+	glm::vec3(-halfW,  halfW, -halfW),		//	|  0------|--3
+	glm::vec3(-halfW,  halfW,  halfW),		//	| /       | /
+	glm::vec3(halfW,  halfW,  halfW),		//	|/        |/
+	glm::vec3(halfW,  halfW, -halfW)		//	1---------2
 };
 
 glm::vec3 verts[8];	//updated verts 
@@ -243,7 +243,7 @@ void PhysicsUpdate(float dt) {
 				{
 					tcLoop(i);
 					if (edge < verts[i].y)
-						bigger = false;		//decrece tc
+						bigger = false;		//decrece tc				//poner parametro crece para meter esto en un if dentro de la función
 					else
 						bigger = true;		//crece tc
 				}
@@ -254,18 +254,79 @@ void PhysicsUpdate(float dt) {
 			}
 			else if (verts[i].x < -5)
 			{
+				tc = dt;
+				edge = -5;
+				n = { 1, 0, 0 };
+
+				while (glm::distance(verts[i], { edge, verts[i].y, verts[i].z }) > tolerance)
+				{
+					tcLoop(i);
+					if (edge > verts[i].x)
+						bigger = false;		//decrece tc
+					else
+						bigger = true;		//crece tc
+				}
+
+				bigger = false;
+
+				collision(i, dt);
 			}
 			else if (verts[i].x > 5)
 			{
-				//pause = true;
+				tc = dt;
+				edge = 5;
+				n = { -1, 0, 0 };
+
+				while (glm::distance(verts[i], { edge, verts[i].y, verts[i].z }) > tolerance)
+				{
+					tcLoop(i);
+					if (edge < verts[i].x)
+						bigger = false;		//decrece tc
+					else
+						bigger = true;		//crece tc
+				}
+
+				bigger = false;
+
+				collision(i, dt);
 			}
 			else if (verts[i].z < -5)
 			{
-				//pause = true;
+				tc = dt;
+				edge = -5;
+				n = { 0, 0, 1 };
+
+				while (glm::distance(verts[i], { verts[i].x, verts[i].y, edge }) > tolerance)
+				{
+					tcLoop(i);
+					if (edge > verts[i].z)
+						bigger = false;		//decrece tc
+					else
+						bigger = true;		//crece tc
+				}
+
+				bigger = false;
+
+				collision(i, dt);
 			}
 			else if (verts[i].z > 5)
 			{
-				//pause = true;
+				tc = dt;
+				edge = 5;
+				n = { 0, 0, -1 };
+
+				while (glm::distance(verts[i], { verts[i].x, verts[i].y, edge }) > tolerance)
+				{
+					tcLoop(i);
+					if (edge < verts[i].z)
+						bigger = false;		//decrece tc
+					else
+						bigger = true;		//crece tc
+				}
+
+				bigger = false;
+
+				collision(i, dt);
 			}
 		}
 	}
