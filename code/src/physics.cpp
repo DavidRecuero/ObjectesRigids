@@ -27,10 +27,12 @@
 		//vertex que colisiona										-> OK
 		//time de colision amb una tolerancia						-> OK
 		//contact point at collision point							-> OK
-		//response velocities at tc to prevent interpenetration		-> 
-		//simulate from tc to t + dif t
+		//response velocities at tc to prevent interpenetration		-> OK
+		//simulate from tc to t + dif t								-> OK
 
-	//arreglar t
+	//arreglar t													->
+	//corregir exceso fuerza										->
+	//set all planes collsions										->
 
 bool show_test_window = false;
 bool reset = false;
@@ -41,7 +43,7 @@ const glm::vec3 gravity{ 0.f, -9.81f, 0.f };	//gravity value
 const glm::vec3 initPos{ 0.f, 5.f, 0.f };		//initial cube position
 const float halfW = 0.5f;						//half edge size
 
-float e = 0.5; //coefficient of restitution
+float e = 0.5f; //coefficient of restitution
 
 float tc;			//time collision
 glm::vec3 lastX;
@@ -156,7 +158,7 @@ void PhysicsInit() {
 
 	/////////////////////////////////////////Torque
 	p = x + q * glm::vec3(0, 1/2, 0);
-	//t = glm::cross((p - cubePos), F);	//!!!!!!!!!!!!!!!!!!!!!!!!!!
+	//t = glm::cross((p - x), F);	//!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	t += glm::vec3{
 		-0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1))),
@@ -343,7 +345,7 @@ void PhysicsUpdate(float dt) {
 				/////////////////////////////////////////////////////////////////////////////
 			
 				//pause = true;
-				break;//cambiar
+				//break;//cambiar
 
 
 
