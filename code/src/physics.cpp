@@ -201,8 +201,6 @@ void PhysicsUpdate(float dt) {
 		for (int i = 0; i < 8; i++) 
 			verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
 
-		std::cout << verts[5].y << std::endl;
-
 		//////////////////////////////////////////Collision
 
 		for (int i = 0; i < 8; i++)			//repenserho
@@ -217,8 +215,8 @@ void PhysicsUpdate(float dt) {
 			}
 			else if (verts[i].y < 0)
 			{
-				std::cout << " ---------------------- " << std::endl;
-				std::cout << "V- = | " << v.x << " | " << v.y << " | " << v.z << " | " << std::endl;
+				std::cout << " ---------------------- " << verts[i].y << std::endl;
+				//std::cout << "V- = | " << v.x << " | " << v.y << " | " << v.z << " | " << std::endl;
 
 				tc = dt;
 				float dTc = tc / 2;
@@ -258,15 +256,17 @@ void PhysicsUpdate(float dt) {
 
 					verts[i] = glm::mat3_cast(auxQ) * initVerts[i] + auxX;
 
-					if (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) < glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }))
+					//if (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) < glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }))
+					if (edge > verts[i].y)
 						bigger = false;//tc -= dTc;
-					else 
+					else
 						bigger = true;//tc += dTc;
-
-					//std::cout << "Loop" << " " << tc << " " << verts[i].y << " " << std::endl;
+						
+					//std::cout << "tc -> " << tc << "| Y -> " << verts[i].y << " current " << glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << " | last " << glm::distance(vertexBuffer, { vertexBuffer.x, edge, vertexBuffer.z }) << std::endl;
+					std::cout << "tc -> " << tc << "| Y -> " << verts[i].y << " | current " << verts[i].y << " | last " << vertexBuffer.y << std::endl;
 				}
 
-				std::cout << glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << std::endl;
+				//std::cout << glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) << std::endl;
 
 				bigger = false;
 				glm::vec3 aux2X = lastX;
@@ -337,6 +337,7 @@ void PhysicsUpdate(float dt) {
 					verts[i] = glm::mat3_cast(q) * initVerts[i] + x;
 
 				std::cout << "V+ = | " << v.x << " | " << v.y << " | " << v.z << " | " << std::endl;
+				std::cout << verts[i].y << std::endl;
 
 				/////////////////////////////////////////////////////////////////////////////
 				/////////////////////////////////////////////////////////////////////////////
