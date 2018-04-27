@@ -31,7 +31,7 @@
 	//simulate from tc to dt									-> OK
 
 //arreglar t												->
-//arreglar loop (búsqueda binaria)	tc - x					-> 
+//arreglar loop (búsqueda binaria)	tc - x					-> OK
 //corregir exceso fuerza	(aplicar fricció - debuggar be)	->
 //set all planes collsions									-> OK
 //netejar codi												->
@@ -165,7 +165,7 @@ void PhysicsInit() {
 	};
 
 	/////////////////////////////////////////Torque
-	p = x + q * glm::vec3(0, 1 / 2, 0);
+	p = x + q * glm::vec3(0, 1 / 2, 1/2);
 	//t = glm::cross((p - x), F);	//!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	t += glm::vec3{
@@ -237,6 +237,8 @@ void PhysicsUpdate(float dt) {
 				}
 
 				collision(i, dt);
+
+				break;
 			}
 			else if (verts[i].y > 10)
 			{
@@ -260,6 +262,8 @@ void PhysicsUpdate(float dt) {
 				}
 
 				collision(i, dt);
+
+				break;
 
 			}
 			else if (verts[i].x < -5)
@@ -285,6 +289,8 @@ void PhysicsUpdate(float dt) {
 
 				collision(i, dt);
 
+				break;
+
 			}
 			else if (verts[i].x > 5)
 			{
@@ -307,6 +313,8 @@ void PhysicsUpdate(float dt) {
 
 				collision(i, dt);
 
+				break;
+
 			}
 			else if (verts[i].z < -5)
 			{
@@ -328,6 +336,8 @@ void PhysicsUpdate(float dt) {
 				}
 
 				collision(i, dt);
+
+				break;
 
 			}
 			else if (verts[i].z > 5)
@@ -352,6 +362,7 @@ void PhysicsUpdate(float dt) {
 
 				collision(i, dt);
 
+				break;
 			}
 		}
 	}
@@ -398,11 +409,14 @@ void resetVariables()
 	for (int i = 0; i < 8; i++)
 		verts[i] = x + initVerts[i];
 
-	t += glm::vec3{
+	/*t += glm::vec3{
 		-0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1))),
 		-0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1))),
 		-0.5 + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (1)))
-	};
+	};*/
+
+	p = x + q * glm::vec3(0, 1 / 2, 0);
+	t = glm::cross((p - x), F);	//!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 }
 
@@ -471,6 +485,7 @@ void collision(int i, float dt)
 	glm::vec3 J = j * n;
 	t = glm::cross(r, J);
 
+	//F = J;
 	P = J; ///?????
 	L = t; //??????
 
@@ -500,5 +515,18 @@ void collision(int i, float dt)
 	std::cout << "V+ = | " << v.x << " | " << v.y << " | " << v.z << " | " << std::endl;
 	std::cout << verts[i].y << std::endl;
 
-	//break;
+	//Avoid bugs
+
+	for (int i = 0; i < 8; i++)
+	{
+		if (verts[i].y < 0 || verts[i].y > 10 || verts[i].x < -5 || verts[i].x > 5 || verts[i].z < -5 || verts[i].z > 5)
+			resetVariables();
+	};
 }
+
+
+
+
+
+
+
