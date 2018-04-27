@@ -31,7 +31,7 @@
 	//simulate from tc to dt									-> OK
 
 //arreglar t												->
-//arreglar loop (búsqueda binaria)							->
+//arreglar loop (búsqueda binaria)	tc - x					-> 
 //corregir exceso fuerza	(aplicar fricció - debuggar be)	->
 //set all planes collsions									-> OK
 //netejar codi												->
@@ -69,6 +69,8 @@ bool bigger = false;
 const float tolerance = 0.05;
 glm::vec3 n;
 float edge;
+float dTc;
+float limit;
 
 glm::vec3 F;		//force
 glm::vec3 x;		//position of cube center in world location
@@ -218,24 +220,38 @@ void PhysicsUpdate(float dt) {
 			{
 				std::cout << " ---------------------- " << verts[i].y << std::endl;
 
-				tc = dt;
+				tc = dt/2;
+				dTc = tc/2;
 				edge = 0;
 				n = { 0, 1, 0 };
+				limit = verts[i].y;
+
+				std::cout << " Limit " << limit << " | LastVert " << lastVerts[i].y << std::endl;
 
 				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)
 				{
 					tcLoop(i);
-					if (edge > verts[i].y)
+
+					/*if (edge > verts[i].y)
 						bigger = false;		//decrece tc
 					else
-						bigger = true;		//crece tc
+						bigger = true;		//crece tc*/
+
+					if (edge > verts[i].y)
+						tc -= dTc;
+					else
+						tc += dTc;
+
+					dTc /= 2.f;
 				}
 
 				bigger = false;
 
 				collision(i, dt);
+
+				break;
 			}
-			else if (verts[i].y > 10)
+			/*else if (verts[i].y > 10)
 			{
 				tc = dt;
 				edge = 10;
@@ -244,6 +260,7 @@ void PhysicsUpdate(float dt) {
 				while (glm::distance(verts[i], { verts[i].x, edge, verts[i].z }) > tolerance)
 				{
 					tcLoop(i);
+
 					if (edge < verts[i].y)
 						bigger = false;		//decrece tc				//poner parametro crece para meter esto en un if dentro de la función
 					else
@@ -253,6 +270,8 @@ void PhysicsUpdate(float dt) {
 				bigger = false;
 
 				collision(i, dt);
+
+				break;
 			}
 			else if (verts[i].x < -5)
 			{
@@ -263,6 +282,7 @@ void PhysicsUpdate(float dt) {
 				while (glm::distance(verts[i], { edge, verts[i].y, verts[i].z }) > tolerance)
 				{
 					tcLoop(i);
+
 					if (edge > verts[i].x)
 						bigger = false;		//decrece tc
 					else
@@ -272,6 +292,8 @@ void PhysicsUpdate(float dt) {
 				bigger = false;
 
 				collision(i, dt);
+
+				break;
 			}
 			else if (verts[i].x > 5)
 			{
@@ -282,6 +304,7 @@ void PhysicsUpdate(float dt) {
 				while (glm::distance(verts[i], { edge, verts[i].y, verts[i].z }) > tolerance)
 				{
 					tcLoop(i);
+
 					if (edge < verts[i].x)
 						bigger = false;		//decrece tc
 					else
@@ -291,6 +314,8 @@ void PhysicsUpdate(float dt) {
 				bigger = false;
 
 				collision(i, dt);
+
+				break;
 			}
 			else if (verts[i].z < -5)
 			{
@@ -301,6 +326,7 @@ void PhysicsUpdate(float dt) {
 				while (glm::distance(verts[i], { verts[i].x, verts[i].y, edge }) > tolerance)
 				{
 					tcLoop(i);
+
 					if (edge > verts[i].z)
 						bigger = false;		//decrece tc
 					else
@@ -310,6 +336,8 @@ void PhysicsUpdate(float dt) {
 				bigger = false;
 
 				collision(i, dt);
+
+				break;
 			}
 			else if (verts[i].z > 5)
 			{
@@ -320,6 +348,7 @@ void PhysicsUpdate(float dt) {
 				while (glm::distance(verts[i], { verts[i].x, verts[i].y, edge }) > tolerance)
 				{
 					tcLoop(i);
+
 					if (edge < verts[i].z)
 						bigger = false;		//decrece tc
 					else
@@ -329,7 +358,9 @@ void PhysicsUpdate(float dt) {
 				bigger = false;
 
 				collision(i, dt);
-			}
+
+				break;
+			}*/
 		}
 	}
 
@@ -385,10 +416,10 @@ void resetVariables()
 
 void tcLoop(int i)
 {
-	if (bigger)
+	/*if (bigger)
 		tc *= 1.5f;
 	else
-		tc *= 0.5f;
+		tc *= 0.5f;*/
 
 	vertexBuffer = verts[i];
 
@@ -411,7 +442,7 @@ void tcLoop(int i)
 
 	verts[i] = glm::mat3_cast(auxQ) * initVerts[i] + auxX;
 
-	std::cout << "tc -> " << tc << "| Y -> " << verts[i].y << " | current " << verts[i].y << " | last " << vertexBuffer.y << std::endl;
+	std::cout << "tc -> " << tc << "| dTc -> " << dTc << " | current " << verts[i].y << " | last " << vertexBuffer.y << std::endl;
 }
 
 void collision(int i, float dt)
@@ -448,11 +479,11 @@ void collision(int i, float dt)
 	glm::vec3 J = j * n;
 	t = glm::cross(r, J);
 
-	P = J; ///?????
-	L = t; //??????
+	P += J - F; ///?????
+	L += t; //??????
 
 
-		   ///////////////////////////////////////////////////////////////////////////////////////////simulate from tc to dt
+///////////////////////////////////////////////////////////////////////////////////////////simulate from tc to dt
 
 	v = P / M;
 	x = aux2X;
